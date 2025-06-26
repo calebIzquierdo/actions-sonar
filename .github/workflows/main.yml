@@ -12,10 +12,12 @@ env:
   DB_NAME: 'product-app-db'  # Nombre de la base de datos en H2
   DB_USER: 'admin'  # Usuario para la base de datos
   DB_PASSWORD: 'admin123'  # Contraseña para la base de datos
+  SONAR_HOST_URL: 'https://your-sonarqube-instance.com'  # URL de tu servidor SonarQube
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}  # Token de autenticación de SonarQube (almacenado en los secretos de GitHub)
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy Locally
+    name: Build, Analyze and Deploy Locally
     runs-on: self-hosted
 
     steps:
@@ -31,11 +33,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 3. Construir el proyecto y crear el .jar
+      # 3. Ejecutar el análisis de SonarQube
+      - name: SonarQube Scan
+        run: |
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=micro-product-actions \
+            -Dsonar.host.url=${{ env.http://docker.jenkins:9000 }} \
+            -Dsonar.login=${{ secrets.squ_a49d1e23205deb517bc2c02323b0d435930f310e}} # Usa tu token de SonarQube
+
+      # 4. Construir el proyecto y crear el .jar
       - name: Build with Maven
         run: mvn -B clean package -DskipTests
 
-      # 4. Desplegar la aplicación usando Docker Compose
+      # 5. Desplegar la aplicación usando Docker Compose
       - name: Deploy with Docker Compose
         run: |
           echo "✅ Iniciando despliegue en el runner local..."
